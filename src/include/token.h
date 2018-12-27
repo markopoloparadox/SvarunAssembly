@@ -1,0 +1,19 @@
+#pragma once
+#include <string>
+#include <optional>
+#include <string_view>
+#include <vector>
+
+enum class TokenType {
+  OPCODE = 1,
+  REGISTER,
+  DIGIT
+};
+
+struct Token {
+  TokenType m_type;
+  std::string m_value;
+};
+
+std::optional<Token> CreateToken(std::string_view token_text);
+std::optional<Token> GetNextToken(std::vector<Token>& tokens);
