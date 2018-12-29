@@ -2,14 +2,6 @@
 #include "conversion.h"
 
 std::optional<Token> CreateToken(std::string_view token_text) {
-  while (token_text.front() == ' ' || token_text.front() == ',') {
-    token_text.remove_prefix(1);
-  }
-
-  while (token_text.back() == ' ' || token_text.back() == ',') {
-    token_text.remove_suffix(1);
-  }
-
   Token t;
 
   if (auto val = StringToOpCode(token_text)) {
