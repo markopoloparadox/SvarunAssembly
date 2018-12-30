@@ -214,8 +214,29 @@ void SaveToFile() {
 }
 
 std::string ReadFile() {
+
+  std::string command = 
+    "sub     sp, sp, 10 "
+    "mov     r0, 65535 "
+    "str     r0, sp, 6 "
+    "mov     r0, 65536 "
+    "str     r0, sp, 2 "
+    "ldr     r0, sp, 6 "
+    "and     r1, r0, 65535 "
+    "ldr     r0, sp, 2 "
+    "and     r0, r0, 65535 "
+    "add     r0, r1, r0 "
+    "and     r0, r0, 65535 "
+    "strh    r0, sp, 0 ";
+  /*
   std::string command =
-    "sub     sp, sp, 8 "
+    "sub     sp, sp, 11 "
+    "mov     r0, 10 "
+    "str     r0, sp, 9 "
+    "mov     r0, 9 "
+    "str     r0, sp, 8 "
+    "mov     r0, 1 "
+    "str     r0, sp, 4 "
     "mov     r0, 1 "
     "str     r0, sp, 4 "
     "mov     r1, 2 "
@@ -223,6 +244,7 @@ std::string ReadFile() {
     "mov     r2, 10 "
     "push r2 "
     "push -33 ";
+  */
   return command;
 }
 
@@ -281,7 +303,7 @@ bool ParseTokens() {
     bool success = false;
     switch (*opcode)
     {
-    case constants::NOOP:
+    case constants::NOP:
       break;
     case constants::ADD:
       success = ParseCommon1(g_tokens, g_code, constants::ADD);
@@ -331,8 +353,20 @@ bool ParseTokens() {
     case constants::LDR:
       success = ParseCommon1(g_tokens, g_code, constants::LDR);
       break;
+    case constants::LDRH:
+      success = ParseCommon1(g_tokens, g_code, constants::LDRH);
+      break;
+    case constants::LDRB:
+      success = ParseCommon1(g_tokens, g_code, constants::LDRB);
+      break;
     case constants::STR:
       success = ParseCommon1(g_tokens, g_code, constants::STR);
+      break;
+    case constants::STRH:
+      success = ParseCommon1(g_tokens, g_code, constants::STRH);
+      break;
+    case constants::STRB:
+      success = ParseCommon1(g_tokens, g_code, constants::STRB);
       break;
     default:
       return false;

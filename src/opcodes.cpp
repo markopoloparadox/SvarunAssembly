@@ -29,6 +29,8 @@ bool ParsePush(Tokens& tokens, SourceCode& code) {
     InsertCode(code, constants::REGISTER);
     InsertCode(code, *reg);
   }
+
+  return true;
 }
 
 bool ParsePop(Tokens& tokens, SourceCode& code) {
@@ -44,6 +46,8 @@ bool ParsePop(Tokens& tokens, SourceCode& code) {
 
   InsertCode(code, constants::POP);
   InsertCode(code, *reg);
+
+  return true;
 }
 
 bool ParseBranch(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
@@ -58,6 +62,8 @@ bool ParseBranch(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
   }
   InsertCode(code, opcode);
   InsertCode(code, *value);
+
+  return true;
 }
 
 bool ParseCommon1(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {

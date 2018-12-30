@@ -6,7 +6,7 @@
 
 static const std::map<std::string, Byte> OpCodeLookup =
 {
- {"noop", constants::NOOP},
+ {"nop", constants::NOP},
  {"add", constants::ADD},
  {"sub", constants::SUB},
  {"and", constants::AND},
@@ -23,7 +23,11 @@ static const std::map<std::string, Byte> OpCodeLookup =
  {"push", constants::PUSH},
  {"pop", constants::POP},
  {"ldr", constants::LDR},
- {"str", constants::STR}
+ {"ldrh", constants::LDRH},
+ {"ldrb", constants::LDRB},
+ {"str", constants::STR},
+ {"strh", constants::STRH},
+ {"strb", constants::STRB}
 };
 
 static const std::map<std::string, Byte> RegisterLookup =
