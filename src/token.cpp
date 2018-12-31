@@ -13,6 +13,13 @@ std::optional<Token> CreateToken(std::string_view token_text) {
   else if (auto val = StringToDigit(token_text)) {
     t.m_type = TokenType::DIGIT;
   }
+  else if (auto val = StringToLabelStart(token_text)) {
+    t.m_type = TokenType::LABEL_START;
+    token_text.remove_suffix(1);
+  }
+  else if (auto val = StringToLabel(token_text)) {
+    t.m_type = TokenType::LABEL;
+  }
   else {
     return {};
   }

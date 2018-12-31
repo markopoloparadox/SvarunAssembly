@@ -1,173 +1,3 @@
-
-/*
-std::vector<uint8_t> g_code;
-std::vector<Token> g_tokens;
-int g_token_position = 0;
-
-std::optional<Token> GetNextToken() {
-  if (g_token_position == g_tokens.size()) {
-    return {};
-  }
-
-  return g_tokens[g_token_position++];
-}
-
-std::string ReadFile();
-void Tokenize(std::string_view line);
-void Parse();
-
-int main(int argc, char *argv[]) {
-  std::cout << "Welcome to Ivana asembler\n";
-
-  auto program = ReadFile();
-
-  std::istringstream stream(program.c_str());
-
-  std::string line;
-  while (std::getline(stream, line)) {
-    Tokenize(line);
-  }
-  Parse();
-
-
-  return 0;
-}
-
-void Tokenize(std::string_view line) {
-  while (1) {
-    if (line.empty()) {
-      return;
-    }
-
-    auto pos = line.find_first_of(' ');
-    if (pos == std::string::npos) {
-      auto token = CreateToken(line);
-      if (token) {
-        g_tokens.push_back(*token);
-      }
-      return;
-    }
-
-    auto token = CreateToken(line.substr(0, pos));
-    if (token) {
-      g_tokens.push_back(*token);
-    }
-
-    line = line.substr(pos + 1);
-  }
-}
-
-bool ParseMov();
-bool Parse2(Token& token) {
-  std::string inst = token.m_value;
-
-  if (inst == "mov") {
-    return ParseMov();
-  }
-
-  return false;
-}
-
-void Parse() {
-  while (auto t = GetNextToken()) {
-    if (t->m_type != TokenType::INSTRUCTION) {
-      std::cout << "Token is not a instruction!";
-      return;
-    }
-
-    if (!Parse2(*t)) {
-      std::cout << "Failed to parse instruction!";
-      return;
-    }
-
-  }
-}
-
-
-bool ParseMov() {
-  auto rt = GetNextToken();
-
-  if (!rt || rt->m_type != TokenType::REGISTER) {
-    std::cout << "rt is not a register!";
-    return false;
-  }
-
-  auto rn = GetNextToken();
-
-  if (!rn) {
-    std::cout << "Token doesn't exists!1";
-    return false;
-  }
-
-  if (rn->m_type == TokenType::REGISTER && rn->m_type == TokenType::DIGIT) {
-    std::cout << "Token doesn't exists!2";
-    return false;
-  }
-
-  InsertCode(g_code, (uint8_t)OpCode::MOV);
-
-  if (rn->m_type == TokenType::REGISTER) {
-
-    InsertCode(g_code, (uint8_t)ImmediateOperand::REGISTER);
-    InsertCode(g_code, StringToRegister(rn->m_value));
-    return true;
-  }
-
-
-  if (rn->m_type == TokenType::DIGIT) {
-    InsertCode(g_code, (uint8_t)ImmediateOperand::OPERAND);
-    InsertCode(g_code, (int32_t)std::stoi(rn->m_value));
-    return true;
-  }
-
-  return false;
-}
-
-
-
-
-void ParseLine(std::string_view line) {
-  std::vector<Token> tokens;
-  std::string_view line_temp = line;
-  while (1) {
-    if (line_temp.empty()) {
-      break;
-    }
-
-    auto empty_space = line_temp.find_first_of(' ');
-    if (empty_space == std::string::npos) {
-      auto token = CreateToken(line_temp);
-      if (token) {
-        tokens.push_back(*token);
-      }
-      break;
-    }
-    else{
-      std::string_view tmp = line_temp.substr(0, empty_space);
-      line_temp = line_temp.substr(empty_space + 1);
-      auto token = CreateToken(tmp);
-      if (token) {
-        tokens.push_back(*token);
-      }
-    }
-  }
-}
-
-
-
-std::string ReadFile() {
-  std::string command = 
-    //"sub sp, sp, 8\n"
-    "mov r0, 1\n"
-    "str r0, sp, 4\n"
-    "mov r1, 1\n"
-    "str r1, sp, 0\n";
-
-  return command;
-}
-*/
-
-
 #include <algorithm>
 #include <iostream>
 #include "token.h"
@@ -176,7 +6,12 @@ std::string ReadFile() {
 #include "conversion.h"
 #include "SvarunCommon/constants.h"
 #include <fstream>
+#include <map>
+#include <utility>
 
+
+std::map<std::string, Word> g_labels;
+std::vector<std::pair<Word, std::string>> g_missingLabels;
 
 SourceCode g_code;
 std::vector<Token> g_tokens;
@@ -187,6 +22,7 @@ bool Tokenize(std::string_view file);
 bool ParseTokens();
 
 void SaveToFile();
+bool FillMissingTokens();
 
 int main(int argc, char *argv[]) {
   std::string file = ReadFile();
@@ -201,10 +37,25 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  if (!FillMissingTokens()) {
+    std::cout << "Failed to add missing labels.";
+    return 0;
+  }
+
   SaveToFile();
 
   return 0;
 }
+bool FillMissingTokens() {
+  for (auto& label : g_missingLabels) {
+    if (g_labels.find(label.second) == g_labels.end()) {
+      return false;
+    }
+    *(Word*)&g_code[label.first] = g_labels[label.second];
+  }
+  return true;
+}
+
 
 void SaveToFile() {
   std::ofstream myfile;
@@ -216,35 +67,25 @@ void SaveToFile() {
 std::string ReadFile() {
 
   std::string command = 
-    "sub     sp, sp, 10 "
-    "mov     r0, 65535 "
-    "str     r0, sp, 6 "
-    "mov     r0, 65536 "
-    "str     r0, sp, 2 "
-    "ldr     r0, sp, 6 "
-    "and     r1, r0, 65535 "
-    "ldr     r0, sp, 2 "
-    "and     r0, r0, 65535 "
-    "add     r0, r1, r0 "
-    "and     r0, r0, 65535 "
-    "strh    r0, sp, 0 ";
-  /*
-  std::string command =
-    "sub     sp, sp, 11 "
-    "mov     r0, 10 "
-    "str     r0, sp, 9 "
-    "mov     r0, 9 "
+    "sub     sp, sp, 16 "
+    "str     r0, sp, 12 "
     "str     r0, sp, 8 "
+    ".L3: "
+    "ldr     r0, sp, 8 "
+    "cmp     r0, 4 "
+    "jgt     .L2 "
+    "ldr     r0, sp, 8 "
+    "ldr     r1, sp, 12 "
+    "add     r0, r1, r0 "
+    "str     r0, sp, 12 "
+    "ldr     r0, sp, 8 "
+    "add     r0, r0, 1 "
+    "str     r0, sp, 8 "
+    "jmp      .L3 "
+    ".L2: "
     "mov     r0, 1 "
-    "str     r0, sp, 4 "
-    "mov     r0, 1 "
-    "str     r0, sp, 4 "
-    "mov     r1, 2 "
-    "str     r1, sp, 0 "
-    "mov     r2, 10 "
-    "push r2 "
-    "push -33 ";
-  */
+    "str     r0, sp, 4 ";
+
   return command;
 }
 
@@ -291,6 +132,11 @@ bool Tokenize(std::string_view file) {
 
 bool ParseTokens() {
   while (auto t = GetNextToken(g_tokens)) {
+    if (t->m_type == TokenType::LABEL_START) {
+      g_labels[t->m_value] = g_code.size();
+      continue;
+    }
+
     if (t->m_type != TokenType::OPCODE) {
       return false;
     }
@@ -326,23 +172,26 @@ bool ParseTokens() {
     case constants::CMP:
       success = ParseCommon2(g_tokens, g_code, constants::CMP);
       break;
-    case constants::IFEQ:
-      success = ParseBranch(g_tokens, g_code, constants::IFEQ);
+    case constants::JMP:
+      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JMP);
       break;
-    case constants::IFNE:
-      success = ParseBranch(g_tokens, g_code, constants::IFNE);
+    case constants::JEQ:
+      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JEQ);
       break;
-    case constants::IFLT:
-      success = ParseBranch(g_tokens, g_code, constants::IFLT);
+    case constants::JNE:
+      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JNE);
       break;
-    case constants::IFLE:
-      success = ParseBranch(g_tokens, g_code, constants::IFLE);
+    case constants::JLT:
+      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JLT);
       break;
-    case constants::IFGT:
-      success = ParseBranch(g_tokens, g_code, constants::IFGT);
+    case constants::JLE:
+      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JLE);
       break;
-    case constants::IFGE:
-      success = ParseBranch(g_tokens, g_code, constants::IFGE);
+    case constants::JGT:
+      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JGT);
+      break;
+    case constants::JGE:
+      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JGE);
       break;
     case constants::PUSH:
       success = ParsePush(g_tokens, g_code);
@@ -372,6 +221,7 @@ bool ParseTokens() {
       return false;
       break;
     }
+
     if (!success) {
       return false;
     }

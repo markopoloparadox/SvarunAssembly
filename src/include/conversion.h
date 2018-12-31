@@ -7,6 +7,8 @@
 std::optional<Byte> StringToOpCode(std::string_view str);
 std::optional<Byte> StringToRegister(std::string_view str);
 std::optional<Word> StringToDigit(std::string_view str);
+std::optional<bool> StringToLabelStart(std::string_view str);
+std::optional<bool> StringToLabel(std::string_view str);
 
 template<typename T>
 void InsertCode(SourceCode& code, T value) {

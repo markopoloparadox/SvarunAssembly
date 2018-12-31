@@ -14,12 +14,13 @@ static const std::map<std::string, Byte> OpCodeLookup =
  {"orr", constants::ORR},
  {"mov", constants::MOV},
  {"cmp", constants::CMP},
- {"ifeq", constants::IFEQ},
- {"ifne", constants::IFNE},
- {"iflt", constants::IFLT},
- {"ifle", constants::IFLE},
- {"ifgt", constants::IFGT},
- {"ifge", constants::IFGE},
+ {"jmp", constants::JMP},
+ {"jeq", constants::JEQ},
+ {"jne", constants::JNE},
+ {"jlt", constants::JLT},
+ {"jle", constants::JLE},
+ {"jgt", constants::JGT},
+ {"jge", constants::JGE},
  {"push", constants::PUSH},
  {"pop", constants::POP},
  {"ldr", constants::LDR},
@@ -55,6 +56,7 @@ std::optional<Byte> StringToOpCode(std::string_view str) {
   return (*it).second;
 }
 
+
 std::optional<Byte> StringToRegister(std::string_view str) {
   auto it = RegisterLookup.find(std::string(str));
   if (it == RegisterLookup.end()) {
@@ -64,6 +66,32 @@ std::optional<Byte> StringToRegister(std::string_view str) {
   return (*it).second;
 }
 
+
 std::optional<Word> StringToDigit(std::string_view str) {
-  return std::stoi(std::string(str));
+  try {
+    return std::stoi(std::string(str));
+  }
+  catch (std::exception& e) {
+    return {};
+  }
+
+  return {};
+}
+
+
+std::optional<bool> StringToLabelStart(std::string_view str) {
+  if (str.front() == '.' && str.back() == ':') {
+    return true;
+  }
+
+  return {};
+}
+
+
+std::optional<bool> StringToLabel(std::string_view str) {
+  if (str.front() == '.') {
+    return true;
+  }
+
+  return {};
 }

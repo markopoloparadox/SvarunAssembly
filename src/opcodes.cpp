@@ -50,19 +50,30 @@ bool ParsePop(Tokens& tokens, SourceCode& code) {
   return true;
 }
 
-bool ParseBranch(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
+bool ParseBranch(Tokens& tokens, SourceCode& code, std::vector<std::pair<Word, std::string>>& missingLabels, constants::OpCode opcode) {
   auto token = GetNextToken(tokens);
-  if (!token || token->m_type != TokenType::DIGIT) {
+  if (!token) {
     return false;
   }
 
-  auto value = StringToDigit(token->m_value);
-  if (!value) {
+  Word number = 0;
+  if (token->m_type == TokenType::DIGIT) {
+    auto value = StringToDigit(token->m_value);
+    if (!value) {
+      return false;
+    }
+    number = *value;
+  }
+  else if (token->m_type == TokenType::LABEL) {
+    missingLabels.push_back(std::make_pair(code.size() + 1, token->m_value));
+    number = 0;
+  }
+  else {
     return false;
   }
+
   InsertCode(code, opcode);
-  InsertCode(code, *value);
-
+  InsertCode(code, number);
   return true;
 }
 

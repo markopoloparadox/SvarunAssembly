@@ -7,7 +7,9 @@
 enum class TokenType {
   OPCODE = 1,
   REGISTER,
-  DIGIT
+  DIGIT,
+  LABEL_START,
+  LABEL
 };
 
 struct Token {
