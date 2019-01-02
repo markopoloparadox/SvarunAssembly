@@ -21,6 +21,13 @@ static const std::map<std::string, Byte> OpCodeLookup =
  {"jle", constants::JLE},
  {"jgt", constants::JGT},
  {"jge", constants::JGE},
+ {"b", constants::JMP},
+ {"beq", constants::JEQ},
+ {"bne", constants::JNE},
+ {"blt", constants::JLT},
+ {"ble", constants::JLE},
+ {"bgt", constants::JGT},
+ {"bge", constants::JGE},
  {"push", constants::PUSH},
  {"pop", constants::POP},
  {"ldr", constants::LDR},
@@ -28,22 +35,37 @@ static const std::map<std::string, Byte> OpCodeLookup =
  {"ldrb", constants::LDRB},
  {"str", constants::STR},
  {"strh", constants::STRH},
- {"strb", constants::STRB}
+ {"strb", constants::STRB},
+ {"mul", constants::MUL},
+ {"lsl", constants::LSL},
+ {"lsr", constants::LSR},
 };
 
 static const std::map<std::string, Byte> RegisterLookup =
 {
  {"r0", constants::R0},
+ {"w0", constants::R0},
  {"r1", constants::R1},
+ {"w1", constants::R1},
  {"r2", constants::R2},
+ {"w2", constants::R2},
  {"r3", constants::R3},
+ {"w3", constants::R3},
  {"r4", constants::R4},
+ {"w4", constants::R4},
  {"r5", constants::R5},
+ {"w5", constants::R5},
  {"r6", constants::R6},
+ {"w6", constants::R6},
  {"r7", constants::R7},
+ {"w7", constants::R7},
  {"r8", constants::R8},
+ {"w8", constants::R8},
  {"r9", constants::R9},
- {"sp", constants::SP}
+ {"w9", constants::R9},
+ {"sp", constants::SP},
+ {"zr", constants::ZR},
+ {"wzr", constants::ZR}
 };
 
 

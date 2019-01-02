@@ -2,50 +2,41 @@
 #include "conversion.h"
 #include "SvarunCommon/constants.h"
 
-bool ParsePush(Tokens& tokens, SourceCode& code) {
+bool Parse0R1O(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
   auto token = GetNextToken(tokens);
   if (!token || (token->m_type != TokenType::DIGIT && token->m_type != TokenType::REGISTER)) {
     return false;
   }
 
   if (token->m_type == TokenType::DIGIT) {
-    auto value = StringToDigit(token->m_value);
-    if (!value) {
-      return false;
-    }
+    auto word = std::get<Word>(token->m_value);
 
-    InsertCode(code, constants::PUSH);
+    InsertCode(code, opcode);
     InsertCode(code, constants::OPERAND);
-    InsertCode(code, *value);
+    InsertCode(code, word);
   }
 
   if (token->m_type == TokenType::REGISTER) {
-    auto reg = StringToRegister(token->m_value);
-    if (!reg) {
-      return false;
-    }
+    auto reg = std::get<Byte>(token->m_value);
 
-    InsertCode(code, constants::PUSH);
+    InsertCode(code, opcode);
     InsertCode(code, constants::REGISTER);
-    InsertCode(code, *reg);
+    InsertCode(code, reg);
   }
 
   return true;
 }
 
-bool ParsePop(Tokens& tokens, SourceCode& code) {
+bool Parse1R0O(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
   auto token = GetNextToken(tokens);
-  if (!token || token->m_type != TokenType::DIGIT) {
+  if (!token || token->m_type != TokenType::REGISTER) {
     return false;
   }
 
-  auto reg = StringToRegister(token->m_value);
-  if (!reg) {
-    return false;
-  }
+  auto reg = std::get<Byte>(token->m_value);
 
-  InsertCode(code, constants::POP);
-  InsertCode(code, *reg);
+  InsertCode(code, opcode);
+  InsertCode(code, reg);
 
   return true;
 }
@@ -58,15 +49,11 @@ bool ParseBranch(Tokens& tokens, SourceCode& code, std::vector<std::pair<Word, s
 
   Word number = 0;
   if (token->m_type == TokenType::DIGIT) {
-    auto value = StringToDigit(token->m_value);
-    if (!value) {
-      return false;
-    }
-    number = *value;
+    number = std::get<Word>(token->m_value);
   }
   else if (token->m_type == TokenType::LABEL) {
-    missingLabels.push_back(std::make_pair(code.size() + 1, token->m_value));
-    number = 0;
+    auto label = std::get<std::string>(token->m_value);
+    missingLabels.push_back(std::make_pair(code.size() + 1, label));
   }
   else {
     return false;
@@ -77,29 +64,19 @@ bool ParseBranch(Tokens& tokens, SourceCode& code, std::vector<std::pair<Word, s
   return true;
 }
 
-bool ParseCommon1(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
+bool Parse2R1O(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
   auto token = GetNextToken(tokens);
 
   if (!token || token->m_type != TokenType::REGISTER) {
     return false;
   }
-
-  auto rt = StringToRegister(token->m_value);
-  if (!rt) {
-    return false;
-  }
-
+  auto regRt = std::get<Byte>(token->m_value);
   token = GetNextToken(tokens);
+
   if (!token || token->m_type != TokenType::REGISTER) {
     return false;
   }
-
-
-  auto rn = StringToRegister(token->m_value);
-  if (!rn) {
-    return false;
-  }
-
+  auto regRn = std::get<Byte>(token->m_value);
   token = GetNextToken(tokens);
 
   if (!token || (token->m_type != TokenType::DIGIT && token->m_type != TokenType::REGISTER)) {
@@ -107,45 +84,34 @@ bool ParseCommon1(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
   }
 
   if (token->m_type == TokenType::DIGIT) {
-    auto value = StringToDigit(token->m_value);
-    if (!value) {
-      return false;
-    }
+    Word word = std::get<Word>(token->m_value);
 
     InsertCode(code, opcode);
     InsertCode(code, constants::OPERAND);
-    InsertCode(code, *rt);
-    InsertCode(code, *rn);
-    InsertCode(code, *value);
+    InsertCode(code, regRt);
+    InsertCode(code, regRn);
+    InsertCode(code, word);
   }
 
   if (token->m_type == TokenType::REGISTER) {
-    auto reg = StringToRegister(token->m_value);
-    if (!reg) {
-      return false;
-    }
+    auto regRm = std::get<Byte>(token->m_value);
 
     InsertCode(code, opcode);
     InsertCode(code, constants::REGISTER);
-    InsertCode(code, *rt);
-    InsertCode(code, *rn);
-    InsertCode(code, *reg);
+    InsertCode(code, regRt);
+    InsertCode(code, regRn);
+    InsertCode(code, regRm);
   }
 
   return true;
 }
 
-bool ParseCommon2(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
+bool Parse1R1O(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
   auto token = GetNextToken(tokens);
   if (!token || token->m_type != TokenType::REGISTER) {
     return false;
   }
-
-  auto rt = StringToRegister(token->m_value);
-  if (!rt) {
-    return false;
-  }
-
+  auto regRt = std::get<Byte>(token->m_value);
   token = GetNextToken(tokens);
 
   if (!token || (token->m_type != TokenType::DIGIT && token->m_type != TokenType::REGISTER)) {
@@ -153,27 +119,21 @@ bool ParseCommon2(Tokens& tokens, SourceCode& code, constants::OpCode opcode) {
   }
 
   if (token->m_type == TokenType::DIGIT) {
-    auto value = StringToDigit(token->m_value);
-    if (!value) {
-      return false;
-    }
+    auto word = std::get<Word>(token->m_value);
 
     InsertCode(code, opcode);
     InsertCode(code, constants::OPERAND);
-    InsertCode(code, *rt);
-    InsertCode(code, *value);
+    InsertCode(code, regRt);
+    InsertCode(code, word);
   }
 
   if (token->m_type == TokenType::REGISTER) {
-    auto reg = StringToRegister(token->m_value);
-    if (!reg) {
-      return false;
-    }
+    auto regRn = std::get<Byte>(token->m_value);
 
     InsertCode(code, opcode);
     InsertCode(code, constants::REGISTER);
-    InsertCode(code, *rt);
-    InsertCode(code, *reg);
+    InsertCode(code, regRt);
+    InsertCode(code, regRn);
   }
 
   return true;

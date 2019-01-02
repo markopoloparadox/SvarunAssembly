@@ -133,7 +133,7 @@ bool Tokenize(std::string_view file) {
 bool ParseTokens() {
   while (auto t = GetNextToken(g_tokens)) {
     if (t->m_type == TokenType::LABEL_START) {
-      g_labels[t->m_value] = g_code.size();
+      g_labels[std::get<std::string>(t->m_value)] = g_code.size();
       continue;
     }
 
@@ -141,36 +141,33 @@ bool ParseTokens() {
       return false;
     }
 
-    auto opcode = StringToOpCode(t->m_value);
-    if (!opcode) {
-      return false;
-    }
+    Byte opcode = std::get<Byte>(t->m_value);
 
     bool success = false;
-    switch (*opcode)
+    switch (opcode)
     {
     case constants::NOP:
       break;
     case constants::ADD:
-      success = ParseCommon1(g_tokens, g_code, constants::ADD);
+      success = Parse2R1O(g_tokens, g_code, constants::ADD);
       break;
     case constants::SUB:
-      success = ParseCommon1(g_tokens, g_code, constants::SUB);
+      success = Parse2R1O(g_tokens, g_code, constants::SUB);
       break;
     case constants::AND:
-      success = ParseCommon1(g_tokens, g_code, constants::AND);
+      success = Parse2R1O(g_tokens, g_code, constants::AND);
       break;
     case constants::EOR:
-      success = ParseCommon1(g_tokens, g_code, constants::EOR);
+      success = Parse2R1O(g_tokens, g_code, constants::EOR);
       break;
     case constants::ORR:
-      success = ParseCommon1(g_tokens, g_code, constants::ORR);
+      success = Parse2R1O(g_tokens, g_code, constants::ORR);
       break;
     case constants::MOV:
-      success = ParseCommon2(g_tokens, g_code, constants::MOV);
+      success = Parse1R1O(g_tokens, g_code, constants::MOV);
       break;
     case constants::CMP:
-      success = ParseCommon2(g_tokens, g_code, constants::CMP);
+      success = Parse1R1O(g_tokens, g_code, constants::CMP);
       break;
     case constants::JMP:
       success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JMP);
@@ -194,28 +191,37 @@ bool ParseTokens() {
       success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JGE);
       break;
     case constants::PUSH:
-      success = ParsePush(g_tokens, g_code);
+      success = Parse0R1O(g_tokens, g_code, constants::PUSH);
       break;
     case constants::POP:
-      success = ParsePop(g_tokens, g_code);
+      success = Parse1R0O(g_tokens, g_code, constants::POP);
       break;
     case constants::LDR:
-      success = ParseCommon1(g_tokens, g_code, constants::LDR);
+      success = Parse2R1O(g_tokens, g_code, constants::LDR);
       break;
     case constants::LDRH:
-      success = ParseCommon1(g_tokens, g_code, constants::LDRH);
+      success = Parse2R1O(g_tokens, g_code, constants::LDRH);
       break;
     case constants::LDRB:
-      success = ParseCommon1(g_tokens, g_code, constants::LDRB);
+      success = Parse2R1O(g_tokens, g_code, constants::LDRB);
       break;
     case constants::STR:
-      success = ParseCommon1(g_tokens, g_code, constants::STR);
+      success = Parse2R1O(g_tokens, g_code, constants::STR);
       break;
     case constants::STRH:
-      success = ParseCommon1(g_tokens, g_code, constants::STRH);
+      success = Parse2R1O(g_tokens, g_code, constants::STRH);
       break;
     case constants::STRB:
-      success = ParseCommon1(g_tokens, g_code, constants::STRB);
+      success = Parse2R1O(g_tokens, g_code, constants::STRB);
+      break;
+    case constants::MUL:
+      success = Parse2R1O(g_tokens, g_code, constants::MUL);
+      break;
+    case constants::LSL:
+      success = Parse2R1O(g_tokens, g_code, constants::LSL);
+      break;
+    case constants::LSR:
+      success = Parse2R1O(g_tokens, g_code, constants::LSR);
       break;
     default:
       return false;

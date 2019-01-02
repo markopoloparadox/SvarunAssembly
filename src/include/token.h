@@ -2,7 +2,8 @@
 #include <string>
 #include <optional>
 #include <string_view>
-#include <vector>
+#include <variant>
+#include "SvarunCommon/types.h"
 
 enum class TokenType {
   OPCODE = 1,
@@ -14,7 +15,7 @@ enum class TokenType {
 
 struct Token {
   TokenType m_type;
-  std::string m_value;
+  std::variant<Byte, Word, std::string> m_value;
 };
 
 using Tokens = std::vector<Token>;
