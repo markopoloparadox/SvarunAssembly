@@ -4,18 +4,21 @@
 #include <string_view>
 #include <variant>
 #include "SvarunCommon/types.h"
+#include "SvarunCommon/strongtypes.h"
+#include <utility>
 
 enum class TokenType {
   OPCODE = 1,
   REGISTER,
-  DIGIT,
+  NUMBER,
   LABEL_START,
-  LABEL
+  LABEL,
+  MEMORY
 };
 
 struct Token {
   TokenType m_type;
-  std::variant<Byte, Word, std::string> m_value;
+  std::variant<types::OpCode, types::Register, types::Memory, Word, std::string> m_value;
 };
 
 using Tokens = std::vector<Token>;

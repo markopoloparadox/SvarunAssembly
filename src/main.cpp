@@ -68,23 +68,23 @@ std::string ReadFile() {
 
   std::string command = 
     "sub     sp, sp, 16 "
-    "str     r0, sp, 12 "
-    "str     r0, sp, 8 "
+    "str     r0, [sp, 12] "
+    "str     r0, [sp, 8] "
     ".L3: "
-    "ldr     r0, sp, 8 "
+    "ldr     r0, [sp, 8] "
     "cmp     r0, 4 "
     "jgt     .L2 "
-    "ldr     r0, sp, 8 "
-    "ldr     r1, sp, 12 "
+    "ldr     r0, [sp, 8] "
+    "ldr     r1, [sp, 12] "
     "add     r0, r1, r0 "
-    "str     r0, sp, 12 "
-    "ldr     r0, sp, 8 "
+    "str     r0, [sp, 12] "
+    "ldr     r0, [sp, 8] "
     "add     r0, r0, 1 "
-    "str     r0, sp, 8 "
+    "str     r0, [sp, 8] "
     "jmp      .L3 "
     ".L2: "
     "mov     r0, 1 "
-    "str     r0, sp, 4 ";
+    "str     r0, [sp, 4] ";
 
   return command;
 }
@@ -102,14 +102,21 @@ std::vector<std::string_view> GetWords(std::string_view text) {
       return words;
     }
 
-    auto pos = text.find_first_of(' ');
-    auto word = text.substr(0, pos);
-    if (!word.empty() && word.back() == ',') {
-      word.remove_suffix(1);
+    size_t pos;
+    if (text.front() == '[') {
+      pos = text.find_first_of(']');
+      pos += 1;
+    }
+    else {
+      auto space = text.find_first_of(' ');
+      auto comma = text.find_first_of(',');
+      pos = space < comma ? space : comma;
     }
 
+    auto word = text.substr(0, pos);
     words.push_back(word);
-    text.remove_prefix(pos + 1);
+
+    text = text.substr(pos);
   }
 
   return words;
@@ -141,87 +148,41 @@ bool ParseTokens() {
       return false;
     }
 
-    Byte opcode = std::get<Byte>(t->m_value);
+    auto opcode = std::get<types::OpCode>(t->m_value);
 
     bool success = false;
-    switch (opcode)
+    switch (opcode.get())
     {
     case constants::NOP:
       break;
     case constants::ADD:
-      success = Parse2R1O(g_tokens, g_code, constants::ADD);
-      break;
     case constants::SUB:
-      success = Parse2R1O(g_tokens, g_code, constants::SUB);
-      break;
     case constants::AND:
-      success = Parse2R1O(g_tokens, g_code, constants::AND);
-      break;
     case constants::EOR:
-      success = Parse2R1O(g_tokens, g_code, constants::EOR);
-      break;
     case constants::ORR:
-      success = Parse2R1O(g_tokens, g_code, constants::ORR);
+    case constants::MUL:
+    case constants::LSL:
+    case constants::LSR:
+      success = Parse2R1O(g_tokens, g_code, opcode);
       break;
     case constants::MOV:
-      success = Parse1R1O(g_tokens, g_code, constants::MOV);
-      break;
     case constants::CMP:
-      success = Parse1R1O(g_tokens, g_code, constants::CMP);
+    case constants::LDR:
+    case constants::LDRH:
+    case constants::LDRB:
+    case constants::STR:
+    case constants::STRH:
+    case constants::STRB:
+      success = Parse1R1O(g_tokens, g_code, opcode);
       break;
     case constants::JMP:
-      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JMP);
-      break;
     case constants::JEQ:
-      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JEQ);
-      break;
     case constants::JNE:
-      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JNE);
-      break;
     case constants::JLT:
-      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JLT);
-      break;
     case constants::JLE:
-      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JLE);
-      break;
     case constants::JGT:
-      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JGT);
-      break;
     case constants::JGE:
-      success = ParseBranch(g_tokens, g_code, g_missingLabels, constants::JGE);
-      break;
-    case constants::PUSH:
-      success = Parse0R1O(g_tokens, g_code, constants::PUSH);
-      break;
-    case constants::POP:
-      success = Parse1R0O(g_tokens, g_code, constants::POP);
-      break;
-    case constants::LDR:
-      success = Parse2R1O(g_tokens, g_code, constants::LDR);
-      break;
-    case constants::LDRH:
-      success = Parse2R1O(g_tokens, g_code, constants::LDRH);
-      break;
-    case constants::LDRB:
-      success = Parse2R1O(g_tokens, g_code, constants::LDRB);
-      break;
-    case constants::STR:
-      success = Parse2R1O(g_tokens, g_code, constants::STR);
-      break;
-    case constants::STRH:
-      success = Parse2R1O(g_tokens, g_code, constants::STRH);
-      break;
-    case constants::STRB:
-      success = Parse2R1O(g_tokens, g_code, constants::STRB);
-      break;
-    case constants::MUL:
-      success = Parse2R1O(g_tokens, g_code, constants::MUL);
-      break;
-    case constants::LSL:
-      success = Parse2R1O(g_tokens, g_code, constants::LSL);
-      break;
-    case constants::LSR:
-      success = Parse2R1O(g_tokens, g_code, constants::LSR);
+      success = ParseBranch(g_tokens, g_code, g_missingLabels, opcode);
       break;
     default:
       return false;
@@ -231,7 +192,6 @@ bool ParseTokens() {
     if (!success) {
       return false;
     }
-
   }
 
   return true;

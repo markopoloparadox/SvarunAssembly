@@ -28,8 +28,6 @@ static const std::map<std::string, Byte> OpCodeLookup =
  {"ble", constants::JLE},
  {"bgt", constants::JGT},
  {"bge", constants::JGE},
- {"push", constants::PUSH},
- {"pop", constants::POP},
  {"ldr", constants::LDR},
  {"ldrh", constants::LDRH},
  {"ldrb", constants::LDRB},
@@ -69,27 +67,27 @@ static const std::map<std::string, Byte> RegisterLookup =
 };
 
 
-std::optional<Byte> StringToOpCode(std::string_view str) {
+std::optional<types::OpCode> StringToOpCode(std::string_view str) {
   auto it = OpCodeLookup.find(std::string(str));
   if (it == OpCodeLookup.end()) {
     return {};
   }
 
-  return (*it).second;
+  return types::OpCode((*it).second);
 }
 
 
-std::optional<Byte> StringToRegister(std::string_view str) {
+std::optional<types::Register> StringToRegister(std::string_view str) {
   auto it = RegisterLookup.find(std::string(str));
   if (it == RegisterLookup.end()) {
     return {};
   }
 
-  return (*it).second;
+  return types::Register((*it).second);
 }
 
 
-std::optional<Word> StringToDigit(std::string_view str) {
+std::optional<Word> StringToNumber(std::string_view str) {
   try {
     return std::stoi(std::string(str));
   }
@@ -101,19 +99,68 @@ std::optional<Word> StringToDigit(std::string_view str) {
 }
 
 
-std::optional<bool> StringToLabelStart(std::string_view str) {
+std::optional<std::string> StringToLabelStart(std::string_view str) {
   if (str.front() == '.' && str.back() == ':') {
-    return true;
+    str.remove_suffix(1);
+    return std::string(str);
   }
 
   return {};
 }
 
 
-std::optional<bool> StringToLabel(std::string_view str) {
+std::optional<std::string> StringToLabel(std::string_view str) {
   if (str.front() == '.') {
-    return true;
+    return std::string(str);
   }
 
   return {};
+}
+
+std::optional<types::Memory> StringToMemory(std::string_view str) {
+  types::Memory mem;
+
+  if (str.back() == '!') {
+    mem.flag = 1;
+    str.remove_suffix(1);
+  }
+
+  if (str.front() != '[' || str.back() != ']') {
+    return {};
+  }
+  str.remove_prefix(1);
+  str.remove_suffix(1);
+  if (str.empty()) {
+    return {};
+  }
+
+  auto delimiter = str.find(',');
+
+  std::optional<types::Register> reg;
+  if (delimiter == std::string::npos) {
+    reg = StringToRegister(str);
+  }
+  else {
+    reg = StringToRegister(str.substr(0, delimiter));
+  }
+
+  if (!reg) {
+    return {};
+  }
+
+  mem.reg = *reg;
+  if (delimiter == std::string::npos) {
+    return mem;
+  }
+  
+  str.remove_prefix(delimiter + 1);
+
+  auto word = StringToNumber(str);
+  if (!word) {
+    return {};
+  }
+
+  mem.offset = *word;
+
+  return mem;
 }
