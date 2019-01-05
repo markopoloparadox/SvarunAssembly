@@ -25,28 +25,21 @@ bool ParseBranch(Tokens& tokens, SourceCode& code, std::vector<std::pair<Word, s
   return true;
 }
 
-bool Parse2R1O(Tokens& tokens, SourceCode& code, types::OpCode opcode) {
-  auto token = GetNextToken(tokens);
-
+static bool InsertRegisterToken(std::optional<Token>& token, SourceCode& code) {
   if (!token || token->m_type != TokenType::REGISTER) {
     return false;
   }
-  auto regRt = std::get<types::Register>(token->m_value);
-  token = GetNextToken(tokens);
 
-  if (!token || token->m_type != TokenType::REGISTER) {
-    return false;
-  }
-  auto regRn = std::get<types::Register>(token->m_value);
-  token = GetNextToken(tokens);
+  auto reg = std::get<types::Register>(token->m_value);
+  InsertCode(code, reg.get());
 
+  return true;
+}
+
+static bool InsertOprandToken(std::optional<Token>& token, SourceCode& code) {
   if (!token) {
     return false;
   }
-
-  InsertCode(code, opcode.get());
-  InsertCode(code, regRt.get());
-  InsertCode(code, regRn.get());
 
   if (token->m_type == TokenType::NUMBER) {
     Word word = std::get<Word>(token->m_value);
@@ -75,44 +68,55 @@ bool Parse2R1O(Tokens& tokens, SourceCode& code, types::OpCode opcode) {
   return true;
 }
 
-bool Parse1R1O(Tokens& tokens, SourceCode& code, types::OpCode opcode) {
-  auto token = GetNextToken(tokens);
-  if (!token || token->m_type != TokenType::REGISTER) {
-    return false;
-  }
-  auto regRt = std::get<types::Register>(token->m_value);
-  token = GetNextToken(tokens);
 
-  if (!token) {
-    return false;
-  }
-
+bool Parse2R2O(Tokens& tokens, SourceCode& code, types::OpCode opcode) {
   InsertCode(code, opcode.get());
-  InsertCode(code, regRt.get());
 
-  if (token->m_type == TokenType::NUMBER) {
-    Word word = std::get<Word>(token->m_value);
-
-    InsertCode(code, constants::NUMBER);
-    InsertCode(code, word);
-  }
-  else if (token->m_type == TokenType::REGISTER) {
-    auto regRm = std::get<types::Register>(token->m_value);
-
-    InsertCode(code, constants::REGISTER);
-    InsertCode(code, regRm.get());
-  }
-  else if (token->m_type == TokenType::MEMORY) {
-    auto mem = std::get<types::Memory>(token->m_value);
-
-    InsertCode(code, constants::MEMORY);
-    InsertCode(code, mem.reg);
-    InsertCode(code, mem.offset);
-    InsertCode(code, mem.flag);
-  }
-  else {
+  auto token = GetNextToken(tokens);
+  if (!InsertRegisterToken(token, code)) {
     return false;
   }
 
-  return true;
+  token = GetNextToken(tokens);
+  if (!InsertRegisterToken(token, code)) {
+    return false;
+  }
+
+  token = GetNextToken(tokens);
+  if (!InsertOprandToken(token, code)) {
+    return false;
+  }
+
+  token = GetNextToken(tokens);
+  return InsertOprandToken(token, code);
+}
+
+
+bool Parse2R1O(Tokens& tokens, SourceCode& code, types::OpCode opcode) {
+  InsertCode(code, opcode.get());
+
+  auto token = GetNextToken(tokens);
+  if (!InsertRegisterToken(token, code)) {
+    return false;
+  }
+
+  token = GetNextToken(tokens);
+  if (!InsertRegisterToken(token, code)) {
+    return false;
+  }
+
+  token = GetNextToken(tokens);
+  return InsertOprandToken(token, code);
+}
+
+bool Parse1R1O(Tokens& tokens, SourceCode& code, types::OpCode opcode) {
+  InsertCode(code, opcode.get());
+
+  auto token = GetNextToken(tokens);
+  if (!InsertRegisterToken(token, code)) {
+    return false;
+  }
+
+  token = GetNextToken(tokens);
+  return InsertOprandToken(token, code);
 }

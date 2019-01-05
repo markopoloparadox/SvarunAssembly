@@ -100,7 +100,7 @@ std::optional<Word> StringToNumber(std::string_view str) {
 
 
 std::optional<std::string> StringToLabelStart(std::string_view str) {
-  if (str.front() == '.' && str.back() == ':') {
+  if (str.back() == ':') {
     str.remove_suffix(1);
     return std::string(str);
   }
@@ -110,11 +110,7 @@ std::optional<std::string> StringToLabelStart(std::string_view str) {
 
 
 std::optional<std::string> StringToLabel(std::string_view str) {
-  if (str.front() == '.') {
-    return std::string(str);
-  }
-
-  return {};
+   return std::string(str);
 }
 
 std::optional<types::Memory> StringToMemory(std::string_view str) {

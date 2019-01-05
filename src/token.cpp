@@ -16,16 +16,16 @@ std::optional<Token> CreateToken(std::string_view token_text) {
     t.m_type = TokenType::NUMBER;
     t.m_value = *val;
   }
+  else if (auto val = StringToMemory(token_text)) {
+    t.m_type = TokenType::MEMORY;
+    t.m_value = *val;
+  }
   else if (auto val = StringToLabelStart(token_text)) {
     t.m_type = TokenType::LABEL_START;
     t.m_value = *val;
   }
   else if (auto val = StringToLabel(token_text)) {
     t.m_type = TokenType::LABEL;
-    t.m_value = *val;
-  }
-  else if (auto val = StringToMemory(token_text)) {
-    t.m_type = TokenType::MEMORY;
     t.m_value = *val;
   }
   else {

@@ -66,25 +66,25 @@ void SaveToFile() {
 
 std::string ReadFile() {
 
-  std::string command = 
+  std::string command =
     "sub     sp, sp, 16 "
-    "str     r0, [sp, 12] "
-    "str     r0, [sp, 8] "
+    "str     wzr, [sp, 12] "
+    "str     wzr, [sp, 8] "
     ".L3: "
-    "ldr     r0, [sp, 8] "
-    "cmp     r0, 4 "
-    "jgt     .L2 "
-    "ldr     r0, [sp, 8] "
-    "ldr     r1, [sp, 12] "
-    "add     r0, r1, r0 "
-    "str     r0, [sp, 12] "
-    "ldr     r0, [sp, 8] "
-    "add     r0, r0, 1 "
-    "str     r0, [sp, 8] "
-    "jmp      .L3 "
+    "ldr     w0, [sp, 8] "
+    "cmp     w0, 2 "
+    "bgt     .L2 "
+    "ldr     w1, [sp, 12] "
+    "ldr     w0, [sp, 8] "
+    "add     w0, w1, w0 "
+    "str     w0, [sp, 12] "
+    "ldr     w0, [sp, 8] "
+    "add     w0, w0, 1 "
+    "str     w0, [sp, 8] "
+    "b       .L3 "
     ".L2: "
-    "mov     r0, 1 "
-    "str     r0, [sp, 4] ";
+    "mov     w3, 0 ";
+
 
   return command;
 }
@@ -155,6 +155,9 @@ bool ParseTokens() {
     {
     case constants::NOP:
       break;
+    case constants::LDP:
+      success = Parse2R2O(g_tokens, g_code, opcode);
+      break;
     case constants::ADD:
     case constants::SUB:
     case constants::AND:
@@ -163,6 +166,7 @@ bool ParseTokens() {
     case constants::MUL:
     case constants::LSL:
     case constants::LSR:
+    case constants::STP:
       success = Parse2R1O(g_tokens, g_code, opcode);
       break;
     case constants::MOV:
